@@ -1,6 +1,6 @@
 package main
 
-import "cmd"
+import "github.com/e1jefe/k8s-controller/cmd"
 
 func main() {
 	cmd.Execute()
