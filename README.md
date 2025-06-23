@@ -1,48 +1,124 @@
-# Go Kubernetes Controller
+# pflag Demo
 
-A Go-based Kubernetes toolkit that provides both programmatic access to Kubernetes APIs and a command-line interface for cluster management.
+A simple Go application demonstrating the use of [pflag](https://github.com/spf13/pflag) and [Cobra](https://github.com/spf13/cobra) for handling command-line flags, specifically for setting log levels.
 
-## Project Structure
+## Features
 
-This repository contains:
+- **Multiple Log Levels**: Supports DEBUG, INFO, WARN, and ERROR log levels
+- **Convenient Flag Shortcuts**: Use `--verbose` for debug level or `--quiet` for error level
+- **Conflict Detection**: Prevents using conflicting flags together (e.g., `--verbose` and `--quiet`)
+- **Input Validation**: Validates log level input and provides helpful error messages
+- **Demo Mode**: Demonstrates different log outputs based on the selected level
 
-- **`cobra-cli/`** - A command-line interface for managing Kubernetes clusters, built with Go and Cobra
-
-## Components
-
-### Cobra CLI Tool
-
-A simple and efficient command-line interface for managing Kubernetes clusters. The CLI provides essential Kubernetes operations in a clean, kubectl-like interface.
-
-**Features:**
-- List Pods, Deployments, and Services
-- Namespace support (specific namespace or all namespaces)
-- Automatic kubeconfig detection
-- Cross-platform support (Linux, macOS, Windows)
-
-See [`cobra-cli/README.md`](cobra-cli/README.md) for detailed usage instructions.
-
-## Quick Start
+## Installation
 
 ```bash
-# Navigate to the CLI tool
-cd cobra-cli
+# Clone the repository
+git clone <repository-url>
+cd go-k8s-controller
 
-# Build the CLI
-go build -o k8s-cli
+# Build the application
+go build -o pflag-demo
 
-# List pods in current namespace
-./k8s-cli pods
+# Run the demo
+./pflag-demo
+```
 
-# List all pods across namespaces
-./k8s-cli pods --all-namespaces
+## Usage
+
+### Basic Usage
+
+```bash
+# Run with default settings (INFO level)
+./pflag-demo
+
+# Run with DEBUG level logging
+./pflag-demo --log-level debug
+
+# Run with verbose mode (equivalent to debug level)
+./pflag-demo --verbose
+
+# Run in quiet mode (error level only)
+./pflag-demo --quiet
+```
+
+### Command Line Options
+
+- `--log-level, -l`: Set the log level (debug, info, warn, error) - default: "info"
+- `--verbose, -v`: Enable verbose logging (equivalent to --log-level=debug)
+- `--quiet, -q`: Enable quiet mode (equivalent to --log-level=error)
+
+### Log Levels
+
+The application supports four log levels in order of verbosity:
+
+1. **DEBUG** - Most detailed logging including all message types
+2. **INFO** - General operational messages, warnings, and errors
+3. **WARN** - Warning messages and errors only
+4. **ERROR** - Error messages only
+
+When you set a log level, only messages at that level and above will be displayed in the demo.
+
+## Examples
+
+```bash
+# Show only error messages
+./pflag-demo --quiet
+./pflag-demo --log-level error
+
+# Show all log messages including debug
+./pflag-demo --verbose
+./pflag-demo --log-level debug
+
+# Show warnings and errors
+./pflag-demo --log-level warn
+
+# Use short flags
+./pflag-demo -v  # verbose mode
+./pflag-demo -q  # quiet mode
+./pflag-demo -l info  # info level
+```
+
+## Flag Conflicts
+
+The application prevents conflicting flags from being used together:
+
+```bash
+# This will result in an error
+./pflag-demo --verbose --quiet
+```
+
+## Output Example
+
+When run with different log levels, the application will show:
+
+### Debug Level (--verbose)
+```
+Log level set to: DEBUG
+
+--- Application Demo ---
+[DEBUG] Debug message: Application started with detailed logging
+[INFO] Info message: Processing data...
+[WARN] Warn message: This is a warning
+[ERROR] Error message: This is an error
+```
+
+### Error Level (--quiet)
+```
+Log level set to: ERROR
+
+--- Application Demo ---
+[ERROR] Error message: This is an error
 ```
 
 ## Prerequisites
 
-- Go 1.24.4 or later
-- Access to a Kubernetes cluster
-- Valid kubeconfig file
+- Go 1.21 or later
+
+## Dependencies
+
+- [cobra](https://github.com/spf13/cobra) - CLI framework
+- [pflag](https://github.com/spf13/pflag) - POSIX/GNU-style command-line flag parsing (included with Cobra)
 
 ## Contributing
 

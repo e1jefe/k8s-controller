@@ -1,4 +1,4 @@
-package cmd
+package cmdAdd commentMore actions
 
 import (
 	"fmt"
