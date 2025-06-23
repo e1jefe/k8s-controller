@@ -1,5 +1,11 @@
 # Kubernetes Controller
 
+[![CI Status](https://github.com/e1jefe/go-k8s-controller/workflows/CI%20k8s-controller%20Pipeline/badge.svg)](https://github.com/e1jefe/go-k8s-controller/actions)
+[![Release](https://img.shields.io/github/v/release/e1jefe/go-k8s-controller)](https://github.com/e1jefe/go-k8s-controller/releases)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io%2Fe1jefe%2Fk8s--controller-blue)](https://ghcr.io/e1jefe/k8s-controller)
+[![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/dl/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A Kubernetes resource management tool built with [Cobra CLI](https://github.com/spf13/cobra) and [client-go](https://github.com/kubernetes/client-go), providing comprehensive Kubernetes resource management capabilities.
 
 ## Features
