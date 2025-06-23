@@ -184,8 +184,8 @@ docker run k8s-controller:latest
 
 ```bash
 # Run with mounted kubeconfig (external cluster)
-docker run -v ~/.kube/config:/.kube/config:ro \
-  k8s-controller:latest list deployments --kubeconfig /.kube/config
+docker run -v ~/.kube/config:/tmp/kubeconfig:ro \
+  k8s-controller:latest list deployments --kubeconfig /tmp/kubeconfig
 
 # Run in Kubernetes cluster (in-cluster auth)
 kubectl run k8s-controller \
@@ -293,7 +293,7 @@ The project includes a comprehensive GitHub Actions workflow that:
    chmod 644 ~/.kube/config
    
    # Use absolute paths in volume mounts
-   docker run -v /absolute/path/to/kubeconfig:/.kube/config:ro ...
+   docker run -v /absolute/path/to/kubeconfig:/tmp/kubeconfig:ro ...
    ```
 
 ## Contributing

@@ -42,10 +42,8 @@ COPY --from=builder /etc/passwd /etc/passwd
 # Copy the binary
 COPY --from=builder /app/k8s-controller /k8s-controller
 
-# Create directory for kubeconfig (when mounted as volume)
-USER root
-RUN mkdir -p /.kube && chown 65532:65532 /.kube
-USER nonroot:nonroot
+# Use non-root user (distroless nonroot user ID)
+USER 65532:65532
 
 # Run the binary
 ENTRYPOINT ["/k8s-controller"]
@@ -55,6 +53,6 @@ CMD ["--help"]
 # Show help:
 #   docker run k8s-controller:latest
 # List deployments (with kubeconfig):
-#   docker run -v ~/.kube/config:/.kube/config:ro k8s-controller:latest list deployments --kubeconfig /.kube/config
+#   docker run -v ~/.kube/config:/tmp/kubeconfig:ro k8s-controller:latest list deployments --kubeconfig /tmp/kubeconfig
 # List deployments (in-cluster):
 #   kubectl run k8s-controller --image=k8s-controller:latest --restart=Never -- list deployments 
