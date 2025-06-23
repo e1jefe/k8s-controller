@@ -1,5 +1,4 @@
 module fasthttp-server
-e590c4e72a6cd8d7f0f29cdec1bdd482637050
 
 go 1.21
 
