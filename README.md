@@ -12,6 +12,7 @@ go build -o fasthttp-server .
 ## Usage
 
 ### Basic Commands
+=======
 
 ```bash
 # Show help
