@@ -75,7 +75,6 @@ jobs:
     - name: Create kind cluster
       uses: helm/kind-action@v1
       with:
-        node_image: kindest/node:v1.28.3
         cluster_name: test-cluster
 
     - name: Test cluster info
