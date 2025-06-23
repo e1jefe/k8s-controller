@@ -1,4 +1,4 @@
-# Zerolog Demo
+# Zerolog Demo app
 
 A simple Go application demonstrating the [zerolog](https://github.com/rs/zerolog) structured logging library with different log levels and formatting options.
 
