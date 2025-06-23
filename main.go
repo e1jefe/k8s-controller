@@ -1,6 +1,6 @@
 package main
 
-import "fasthttp-server/cmd"
+import "github.com/e1jefe/k8s-controller/cmd"
 
 func main() {
 	cmd.Execute()
