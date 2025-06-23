@@ -1,15 +1,22 @@
 # Kubernetes Controller
 
-A Kubernetes controller built with [fasthttp](https://github.com/valyala/fasthttp) and [Cobra CLI](https://github.com/spf13/cobra), providing a high-performance HTTP server for controller operations.
+[![CI Status](https://github.com/e1jefe/k8s-controller/workflows/K8S-controller/badge.svg)](https://github.com/e1jefe/go-k8s-controller/actions)
+[![Release](https://img.shields.io/github/v/release/e1jefe/k8s-controller)](https://github.com/e1jefe/go-k8s-controller/releases)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io%2Fe1jefe%2Fk8s--controller-blue)](https://ghcr.io/e1jefe/k8s-controller)
+[![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/dl/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+A Kubernetes resource management tool built with [Cobra CLI](https://github.com/spf13/cobra) and [client-go](https://github.com/kubernetes/client-go), providing comprehensive Kubernetes resource management capabilities.
 
 ## Features
 
-- High-performance HTTP server using FastHTTP
-- RESTful API endpoints for health checks and server information
-- Graceful shutdown with configurable timeout
-- Docker support with multi-stage builds using distroless images
-- Comprehensive build system with Makefile
-- Request logging and monitoring capabilities
+- **Kubernetes deployment listing** with kubeconfig authentication
+- **Multiple authentication methods** (kubeconfig file, custom path, in-cluster)
+- **Clean CLI interface** with intuitive commands
+- **Docker support** with distroless images for security
+- **Comprehensive build system** with Makefile
+- **Kubernetes client-go integration** for cluster operations
+- **CI/CD pipeline** with automated testing
 
 ## Installation
 
@@ -33,11 +40,11 @@ make build-local
 # Build for production (Linux)
 make build
 
-# Build and run locally
+# Build and show help
 make run
 
-# Build and run server directly
-make run-server
+# Build and run list deployments
+make run-list-deployments
 
 # Run all checks (format, test)
 make check
@@ -64,37 +71,50 @@ make docker-push
 # Show help
 ./bin/k8s-controller --help
 
-# Show server command help
-./bin/k8s-controller server --help
+# Show list command help
+./bin/k8s-controller list --help
 ```
 
-### Starting the Server
+### Kubernetes Operations
+
+#### Listing Deployments
 
 ```bash
-# Start server on default port 8080
-./bin/k8s-controller server
+# List deployments in default namespace (uses default kubeconfig)
+./bin/k8s-controller list deployments
 
-# Start server on custom port
-./bin/k8s-controller server --port 3000
-./bin/k8s-controller server -p 3000
+# List deployments with custom kubeconfig
+./bin/k8s-controller list deployments --kubeconfig /path/to/kubeconfig
 
-# Start server on custom host and port
-./bin/k8s-controller server --host 0.0.0.0 --port 8080
-./bin/k8s-controller server -H 0.0.0.0 -p 8080
+# List deployments with kubeconfig from custom location
+./bin/k8s-controller list deployments --kubeconfig ~/.kube/custom-config
 ```
 
-### API Endpoints
+**Output Example:**
+```
+Found 2 deployments in default namespace:
 
-The server provides the following endpoints:
+NAME                           READY      UP-TO-DATE AVAILABLE  AGE            
+----------------------------------------------------------------------------------------------
+nginx                          2/2        2          2          5m             
+web-app                        3/3        3          3          2h             
+```
 
-- `GET /` - Welcome message
-- `GET /health` - Health check endpoint
-- `GET /info` - Server information including request details
+#### Authentication
 
-### Server Flags
+The application supports multiple authentication methods:
 
-- `--port, -p`: Port to run the server on (default: 8080)
-- `--host, -H`: Host address to bind the server to (default: localhost)
+1. **Kubeconfig file** (default: `~/.kube/config`)
+2. **Custom kubeconfig path** via `--kubeconfig` flag
+3. **In-cluster configuration** when running inside a Kubernetes pod
+
+### Command Flags
+
+#### Global Flags
+- `--help, -h`: Show help information
+
+#### List Flags
+- `--kubeconfig`: Path to kubeconfig file (default: `$HOME/.kube/config`)
 
 ## Development
 
@@ -103,56 +123,194 @@ The server provides the following endpoints:
 - Go 1.21 or later
 - Docker (for containerized builds)
 - Make
+- Kubernetes cluster access (for testing list functionality)
 
 ### Available Make Targets
 
 ```bash
-make all             # Run clean, deps, fmt, test, and build
-make build           # Build binary for Linux (production)
-make build-local     # Build binary for current OS
-make clean           # Clean build artifacts
-make test            # Run tests
-make test-coverage   # Run tests with coverage report
-make deps            # Download and tidy dependencies
-make fmt             # Format code
-make check           # Run all checks (fmt, test)
-make docker-build    # Build Docker image
-make docker-push     # Push Docker image
-make run             # Build and run application
-make run-server      # Build and run server command
-make security        # Run security scan (requires gosec)
+make all                    # Run clean, deps, fmt, test, and build
+make build                  # Build binary for Linux (production)
+make build-local            # Build binary for current OS
+make clean                  # Clean build artifacts
+make test                   # Run tests
+make test-coverage          # Run tests with coverage report
+make deps                   # Download and tidy dependencies
+make fmt                    # Format code
+make check                  # Run all checks (fmt, test)
+make docker-build           # Build Docker image
+make docker-push            # Push Docker image
+make run                    # Build and show help
+make run-list-deployments   # Build and run list deployments command
+make test-k8s               # Test Kubernetes connectivity
+make security               # Run security scan (requires gosec)
 ```
 
 ### Testing
 
 ```bash
-# Run tests
+# Run unit tests
 make test
 
 # Run tests with coverage
 make test-coverage
+
+# Test Kubernetes connectivity (requires cluster access)
+make test-k8s
+```
+
+### Kubernetes Integration Testing
+
+The project includes integration tests that run against a real Kubernetes cluster:
+
+```bash
+# Start local cluster (minikube/kind) and run
+make test-k8s
+
+# Or manually test with actual deployments
+kubectl create deployment nginx --image=nginx --replicas=2
+./bin/k8s-controller list deployments
+kubectl delete deployment nginx
 ```
 
 ## Docker Deployment
 
 The project includes a multi-stage Dockerfile using distroless images for security:
 
+### Basic Usage
+
 ```bash
 # Build image
 docker build -t k8s-controller:latest .
 
-# Run container
-docker run -p 8080:8080 k8s-controller:latest
+# Show help
+docker run k8s-controller:latest
 ```
+
+### Kubernetes Operations with Docker
+
+```bash
+# Run with mounted kubeconfig (external cluster)
+docker run -v ~/.kube/config:/tmp/kubeconfig:ro \
+  k8s-controller:latest list deployments --kubeconfig /tmp/kubeconfig
+
+# Run in Kubernetes cluster (in-cluster auth)
+kubectl run k8s-controller \
+  --image=k8s-controller:latest \
+  --restart=Never \
+  -- list deployments
+```
+
+### Docker Image Features
 
 The Docker image:
 - Uses Go 1.21 Alpine for building
 - Creates a statically linked binary
 - Uses distroless/static:nonroot for the final image
-- Includes health checks
 - Runs as non-root user
-- Exposes port 8080
+- Supports volume mounting for kubeconfig
+- Multi-architecture support (linux/amd64, linux/arm64)
+
+## Deployment Examples
+
+### Local Development
+
+```bash
+# Install and test locally
+make build-local
+./bin/k8s-controller list deployments
+```
+
+### Kubernetes Job
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k8s-controller-list
+spec:
+  template:
+    spec:
+      containers:
+      - name: k8s-controller
+        image: k8s-controller:latest
+        command: ["k8s-controller", "list", "deployments"]
+      restartPolicy: Never
+  backoffLimit: 4
+```
+
+### Kubernetes CronJob (Regular Deployment Checks)
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: deployment-monitor
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: k8s-controller
+            image: k8s-controller:latest
+            command: ["k8s-controller", "list", "deployments"]
+          restartPolicy: OnFailure
+```
+
+## CI/CD Pipeline
+
+The project includes a comprehensive GitHub Actions workflow that:
+
+- **Tests** the application with unit tests and coverage reporting
+- **Kubernetes Integration Tests** using minikube to verify deployment listing functionality
+- **Builds** multi-architecture Docker images
+- **Pushes** to GitHub Container Registry
+- **Validates** the entire pipeline on every push and pull request
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Kubeconfig not found**
+   ```bash
+   # Verify kubeconfig location
+   ls -la ~/.kube/config
+   
+   # Test cluster connectivity
+   kubectl cluster-info
+   
+   # Use custom kubeconfig
+   ./k8s-controller list deployments --kubeconfig /path/to/config
+   ```
+
+2. **Permission denied errors**
+   ```bash
+   # Check cluster permissions
+   kubectl auth can-i list deployments
+   
+   # Verify current context
+   kubectl config current-context
+   ```
+
+3. **Docker volume mounting issues**
+   ```bash
+   # Ensure proper permissions on kubeconfig
+   chmod 644 ~/.kube/config
+   
+   # Use absolute paths in volume mounts
+   docker run -v /absolute/path/to/kubeconfig:/tmp/kubeconfig:ro ...
+   ```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Run `make check` to ensure code quality
+6. Submit a pull request
 
 ## License
 
-This project is a Kubernetes controller with FastHTTP server integration. 
+This project is a Kubernetes resource management tool with comprehensive deployment listing capabilities. 

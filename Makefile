@@ -89,12 +89,21 @@ docker-push:
 # Run the application locally
 run:
 	@echo "Running $(BINARY_NAME)..."
-	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) . && $(BUILD_DIR)/$(BINARY_NAME)
+	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) . && $(BUILD_DIR)/$(BINARY_NAME) --help
 
-# Run the server command
-run-server:
-	@echo "Running $(BINARY_NAME) server..."
-	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) . && $(BUILD_DIR)/$(BINARY_NAME) server
+# Run the list deployments command (requires Kubernetes cluster access)
+run-list-deployments:
+	@echo "Running $(BINARY_NAME) list deployments..."
+	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) . && $(BUILD_DIR)/$(BINARY_NAME) list deployments
+
+# Test Kubernetes connectivity (requires cluster access)
+test-k8s:
+	@echo "Testing Kubernetes connectivity..."
+	@if $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) . && $(BUILD_DIR)/$(BINARY_NAME) list deployments >/dev/null 2>&1; then \
+		echo "✓ Kubernetes connectivity test passed"; \
+	else \
+		echo "✗ Kubernetes connectivity test failed - ensure you have a valid kubeconfig and cluster access"; \
+	fi
 
 # Install development tools
 install-tools:
@@ -113,19 +122,20 @@ security:
 # Show help
 help:
 	@echo "Available targets:"
-	@echo "  all             - Run clean, deps, fmt, lint, test, and build"
-	@echo "  build           - Build binary for Linux (production)"
-	@echo "  build-local     - Build binary for current OS"
-	@echo "  clean           - Clean build artifacts"
-	@echo "  test            - Run tests"
-	@echo "  test-coverage   - Run tests with coverage report"
-	@echo "  deps            - Download and tidy dependencies"
-	@echo "  fmt             - Format code"
-	@echo "  check           - Run all checks (fmt, test)"
-	@echo "  docker-build    - Build Docker image"
-	@echo "  docker-push     - Push Docker image"
-	@echo "  run             - Build and run application"
-	@echo "  run-server      - Build and run server command"
-	@echo "  install-tools   - Install development tools"
-	@echo "  security        - Run security scan"
-	@echo "  help            - Show this help message" 
+	@echo "  all                    - Run clean, deps, fmt, lint, test, and build"
+	@echo "  build                  - Build binary for Linux (production)"
+	@echo "  build-local            - Build binary for current OS"
+	@echo "  clean                  - Clean build artifacts"
+	@echo "  test                   - Run tests"
+	@echo "  test-coverage          - Run tests with coverage report"
+	@echo "  deps                   - Download and tidy dependencies"
+	@echo "  fmt                    - Format code"
+	@echo "  check                  - Run all checks (fmt, test)"
+	@echo "  docker-build           - Build Docker image"
+	@echo "  docker-push            - Push Docker image"
+	@echo "  run                    - Build and show help"
+	@echo "  run-list-deployments   - Build and run list deployments command"
+	@echo "  test-k8s               - Test Kubernetes connectivity"
+	@echo "  install-tools          - Install development tools"
+	@echo "  security               - Run security scan"
+	@echo "  help                   - Show this help message" 
