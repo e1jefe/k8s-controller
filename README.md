@@ -1,48 +1,96 @@
-# Go Kubernetes Controller
+# Zerolog Demo
 
-A Go-based Kubernetes toolkit that provides both programmatic access to Kubernetes APIs and a command-line interface for cluster management.
+A simple Go application demonstrating the [zerolog](https://github.com/rs/zerolog) structured logging library with different log levels and formatting options.
 
-## Project Structure
+## Features
 
-This repository contains:
+- **Multiple Log Levels**: Supports TRACE, DEBUG, INFO, WARN, and ERROR log levels
+- **Configurable Output**: Choose between structured JSON logging or pretty console output
+- **Level Filtering**: Only displays messages at or above the specified log level
+- **Command-line Interface**: Built with Cobra for clean CLI experience
 
-- **`cobra-cli/`** - A command-line interface for managing Kubernetes clusters, built with Go and Cobra
-
-## Components
-
-### Cobra CLI Tool
-
-A simple and efficient command-line interface for managing Kubernetes clusters. The CLI provides essential Kubernetes operations in a clean, kubectl-like interface.
-
-**Features:**
-- List Pods, Deployments, and Services
-- Namespace support (specific namespace or all namespaces)
-- Automatic kubeconfig detection
-- Cross-platform support (Linux, macOS, Windows)
-
-See [`cobra-cli/README.md`](cobra-cli/README.md) for detailed usage instructions.
-
-## Quick Start
+## Installation
 
 ```bash
-# Navigate to the CLI tool
-cd cobra-cli
+# Clone the repository
+git clone <repository-url>
+cd go-k8s-controller
 
-# Build the CLI
-go build -o k8s-cli
+# Build the application
+go build -o zerolog-demo
 
-# List pods in current namespace
-./k8s-cli pods
+# Run the demo
+./zerolog-demo
+```
 
-# List all pods across namespaces
-./k8s-cli pods --all-namespaces
+## Usage
+
+### Basic Usage
+
+```bash
+# Run with default settings (INFO level)
+./zerolog-demo
+
+# Run with DEBUG level logging
+./zerolog-demo --level debug
+
+# Run with pretty console output
+./zerolog-demo --pretty
+
+# Run with TRACE level and pretty output
+./zerolog-demo --level trace --pretty
+```
+
+### Command Line Options
+
+- `--level, -l`: Set the log level (trace, debug, info, warn, error) - default: "info"
+- `--pretty, -p`: Enable pretty console output with colors - default: false
+
+### Log Levels
+
+The application demonstrates five log levels in order of verbosity:
+
+1. **TRACE** - Most detailed logging for debugging
+2. **DEBUG** - Debug information
+3. **INFO** - General operational messages
+4. **WARN** - Warning messages
+5. **ERROR** - Error conditions
+
+When you set a log level, only messages at that level and above will be displayed.
+
+## Examples
+
+```bash
+# Show only warnings and errors
+./zerolog-demo --level warn
+
+# Show all log messages with colorized output
+./zerolog-demo --level trace --pretty
+
+# Use short flags
+./zerolog-demo -l debug -p
+```
+
+## Output Formats
+
+### Structured JSON (default)
+```json
+{"level":"info","time":"2023-12-07T10:30:45Z","message":"This is an INFO message"}
+```
+
+### Pretty Console (with --pretty flag)
+```
+10:30:45 INF This is an INFO message
 ```
 
 ## Prerequisites
 
-- Go 1.24.4 or later
-- Access to a Kubernetes cluster
-- Valid kubeconfig file
+- Go 1.21 or later
+
+## Dependencies
+
+- [zerolog](https://github.com/rs/zerolog) - Structured logging library
+- [cobra](https://github.com/spf13/cobra) - CLI framework
 
 ## Contributing
 

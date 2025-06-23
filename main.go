@@ -1,6 +1,6 @@
 package main
 
-import "cobra-cli/cmd"
+import "github.com/e1jefe/k8s-controller/cmd"
 
 func main() {
 	cmd.Execute()
