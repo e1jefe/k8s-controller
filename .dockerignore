@@ -1,0 +1,45 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+bin/
+build/
+dist/
+
+# Test files
+*_test.go
+coverage.out
+coverage.html
+
+# CI/CD files
+.github/
+
+# Local development files
+.env
+.env.local
+
+# Node modules (if any)
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Go specific
+vendor/ 
