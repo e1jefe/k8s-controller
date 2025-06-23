@@ -8,15 +8,15 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "fasthttp-server",
-	Short: "A high-performance HTTP server built with fasthttp",
-	Long: `A command line HTTP server application built with fasthttp library.
-This tool provides commands to start and manage a high-performance HTTP server.
+	Use:   "k8s-controller",
+	Short: "A Kubernetes resource management tool",
+	Long: `A command line tool for managing Kubernetes resources.
+This tool provides commands to manage Kubernetes resources with support for
+various resource types including pods, deployments, services, and more.
 
 Examples:
-  fasthttp-server server                    # Start server on default port 8080
-  fasthttp-server server --port 3000       # Start server on port 3000
-  fasthttp-server server -p 9000           # Start server on port 9000`,
+  k8s-controller list deployments                    # List deployments in default namespace
+  k8s-controller list deployments --kubeconfig ~/.kube/config  # Use specific kubeconfig`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -32,10 +32,4 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.fasthttp-server.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

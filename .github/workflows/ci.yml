@@ -55,10 +55,52 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
+  kubernetes-integration:
+    name: Kubernetes Integration Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Start minikube
+      uses: medyagh/setup-minikube@latest
+      with:
+        minikube-version: 1.32.0
+        kubernetes-version: v1.28.3
+
+    - name: Test cluster info
+      run: kubectl cluster-info
+
+    - name: Build application
+      run: go build -o k8s-controller .
+
+    - name: Test list deployments command
+      run: |
+        # Test the command works (should show 0 deployments)
+        ./k8s-controller list deployments
+
+    - name: Create test deployment
+      run: |
+        kubectl create deployment test-nginx --image=nginx --replicas=2
+        kubectl wait --for=condition=available --timeout=300s deployment/test-nginx
+
+    - name: Test list deployments with actual deployment
+      run: |
+        # Test with actual deployment
+        ./k8s-controller list deployments | grep test-nginx
+
+    - name: Clean up test deployment
+      run: kubectl delete deployment test-nginx
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [test, set_version]
+    needs: [test, kubernetes-integration, set_version]
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -85,7 +127,7 @@ jobs:
   docker:
     name: Docker Build and Push
     runs-on: ubuntu-latest
-    needs: [test, set_version]
+    needs: [test, kubernetes-integration, set_version]
     if: github.event_name == 'push'
     permissions:
       contents: read

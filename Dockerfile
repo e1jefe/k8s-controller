@@ -28,6 +28,12 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # Final stage - distroless
 FROM gcr.io/distroless/static:nonroot
 
+# Add labels for the image
+LABEL org.opencontainers.image.title="k8s-controller"
+LABEL org.opencontainers.image.description="Kubernetes resource management tool for listing deployments and managing cluster resources"
+LABEL org.opencontainers.image.vendor="e1jefe"
+LABEL org.opencontainers.image.source="https://github.com/e1jefe/k8s-controller"
+
 # Import from builder
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
@@ -36,16 +42,19 @@ COPY --from=builder /etc/passwd /etc/passwd
 # Copy the binary
 COPY --from=builder /app/k8s-controller /k8s-controller
 
-# Use non-root user
+# Create directory for kubeconfig (when mounted as volume)
+USER root
+RUN mkdir -p /.kube && chown 65532:65532 /.kube
 USER nonroot:nonroot
-
-# Expose port 8080
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD ["/k8s-controller", "server", "--port", "8080"]
 
 # Run the binary
 ENTRYPOINT ["/k8s-controller"]
-CMD ["server"] 
+CMD ["--help"]
+
+# Usage examples:
+# Show help:
+#   docker run k8s-controller:latest
+# List deployments (with kubeconfig):
+#   docker run -v ~/.kube/config:/.kube/config:ro k8s-controller:latest list deployments --kubeconfig /.kube/config
+# List deployments (in-cluster):
+#   kubectl run k8s-controller --image=k8s-controller:latest --restart=Never -- list deployments 
