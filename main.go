@@ -1,6 +1,6 @@
 package main
 
-import "cobra-cli/cmd"
+import "cmd"
 
 func main() {
 	cmd.Execute()
