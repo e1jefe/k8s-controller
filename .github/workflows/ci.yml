@@ -1,11 +1,15 @@
-name: CI k8s-controller Pipeline
+name: K8S-controller
 
 on:
   push:
     branches: [ main, feature/* ]
     tags: [ 'v*' ]
+    paths-ignore:
+      - 'README.md'
   pull_request:
     branches: [ main, feature/* ]
+    paths-ignore:
+      - 'README.md'
 
 env:
   GO_VERSION: '1.21'
