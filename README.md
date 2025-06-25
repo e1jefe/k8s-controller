@@ -17,6 +17,8 @@ A Kubernetes resource management tool built with [Cobra CLI](https://github.com/
 - **Comprehensive build system** with Makefile
 - **Kubernetes client-go integration** for cluster operations
 - **CI/CD pipeline** with automated testing
+- **List Deployments**: List all deployments in a specified namespace
+- **Deployment Informer**: Watch for deployment changes (add, update, delete) with real-time logging
 
 ## Installation
 
@@ -115,6 +117,37 @@ The application supports multiple authentication methods:
 
 #### List Flags
 - `--kubeconfig`: Path to kubeconfig file (default: `$HOME/.kube/config`)
+
+### Deployment Informer
+
+The informer watches for real-time changes to Kubernetes deployment resources and logs detailed information about each event.
+
+```bash
+# Watch deployments in default namespace
+./bin/k8s-controller informer
+
+# Watch deployments in specific namespace
+./bin/k8s-controller informer --namespace=kube-system
+
+# Use in-cluster authentication (when running inside a pod)
+./bin/k8s-controller informer --in-cluster
+
+# Custom kubeconfig and resync period
+./bin/k8s-controller informer --kubeconfig ~/.kube/config --resync-period=60s
+```
+
+### Informer Features
+
+- **Real-time Event Detection**: Monitors ADD, UPDATE, and DELETE events for deployments
+- **Detailed Logging**: Logs comprehensive deployment information including:
+  - Name, namespace, and labels
+  - Replica counts (desired, ready, available, updated)
+  - Creation timestamps
+  - Deployment conditions and status
+- **Graceful Shutdown**: Handles SIGINT/SIGTERM for clean shutdown
+- **Authentication Options**: Supports both kubeconfig and in-cluster authentication
+- **Configurable Namespace**: Watch deployments in any namespace
+- **Resync Period**: Configurable resync interval for cache synchronization
 
 ## Development
 

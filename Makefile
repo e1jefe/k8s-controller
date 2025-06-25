@@ -26,7 +26,11 @@ DOCKER_IMAGE := $(DOCKER_REGISTRY)/e1jefe/$(APP_NAME)
 # Ldflags
 LDFLAGS := -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)"
 
-.PHONY: all build clean test test-coverage deps fmt lint vet check docker-build docker-push help
+# Test variables
+ENVTEST_K8S_VERSION = 1.29.0
+ENVTEST_BIN_DIR = bin/k8s
+
+.PHONY: all build clean test test-coverage deps fmt lint vet check docker-build docker-push help envtest
 
 # Default target
 all: clean deps fmt test build
@@ -47,19 +51,28 @@ build-local:
 clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
+	@chmod -R +w $(BUILD_DIR) 2>/dev/null || true
 	@rm -rf $(BUILD_DIR)
-	@rm -f coverage.out
+	@rm -f coverage.out cover.out cmd/coverage.out
 
-# Run tests
-test:
-	@echo "Running tests..."
-	$(GOTEST) -v ./...
+# Setup envtest
+envtest:
+	@echo "Setting up envtest..."
+	@mkdir -p $(ENVTEST_BIN_DIR)
+	@test -f $(ENVTEST_BIN_DIR)/setup-envtest || \
+	GOBIN=$(PWD)/$(ENVTEST_BIN_DIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	@$(ENVTEST_BIN_DIR)/setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir $(ENVTEST_BIN_DIR) >/dev/null
+
+# Run tests with envtest
+test: envtest
+	@echo "Running tests with envtest..."
+	cd cmd && KUBEBUILDER_ASSETS="../$(ENVTEST_BIN_DIR)/k8s/1.29.0-darwin-arm64" $(GOTEST) -v -timeout 60s
 
 # Run tests with coverage
-test-coverage:
+test-coverage: envtest
 	@echo "Running tests with coverage..."
-	$(GOTEST) -v -race -coverprofile=coverage.out ./...
-	$(GOCMD) tool cover -html=coverage.out -o coverage.html
+	cd cmd && KUBEBUILDER_ASSETS="../$(ENVTEST_BIN_DIR)/k8s/1.29.0-darwin-arm64" $(GOTEST) -v -race -coverprofile=coverage.out -timeout 60s
+	cd cmd && $(GOCMD) tool cover -html=coverage.out -o coverage.html
 
 # Download dependencies
 deps:
@@ -72,8 +85,13 @@ fmt:
 	@echo "Formatting code..."
 	$(GOFMT) ./...
 
+# Vet code
+vet:
+	@echo "Vetting code..."
+	$(GOCMD) vet ./...
+
 # Run all checks
-check: fmt test
+check: fmt vet test
 
 # Build Docker image
 docker-build:
@@ -90,6 +108,11 @@ docker-push:
 run:
 	@echo "Running $(BINARY_NAME)..."
 	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) . && $(BUILD_DIR)/$(BINARY_NAME) --help
+
+# Run the informer
+run-informer:
+	@echo "Running $(BINARY_NAME) informer..."
+	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) . && $(BUILD_DIR)/$(BINARY_NAME) informer
 
 # Run the list deployments command (requires Kubernetes cluster access)
 run-list-deployments:
@@ -119,23 +142,32 @@ security:
 		echo "gosec not found. Install it with: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest"; \
 	fi
 
+# Install binary
+install:
+	@echo "Installing $(BINARY_NAME)..."
+	$(GOCMD) install .
+
 # Show help
 help:
 	@echo "Available targets:"
-	@echo "  all                    - Run clean, deps, fmt, lint, test, and build"
+	@echo "  all                    - Run clean, deps, fmt, test, and build"
 	@echo "  build                  - Build binary for Linux (production)"
 	@echo "  build-local            - Build binary for current OS"
 	@echo "  clean                  - Clean build artifacts"
-	@echo "  test                   - Run tests"
+	@echo "  envtest                - Setup envtest binaries"
+	@echo "  test                   - Run tests with envtest"
 	@echo "  test-coverage          - Run tests with coverage report"
 	@echo "  deps                   - Download and tidy dependencies"
 	@echo "  fmt                    - Format code"
-	@echo "  check                  - Run all checks (fmt, test)"
+	@echo "  vet                    - Vet code"
+	@echo "  check                  - Run all checks (fmt, vet, test)"
 	@echo "  docker-build           - Build Docker image"
 	@echo "  docker-push            - Push Docker image"
 	@echo "  run                    - Build and show help"
+	@echo "  run-informer           - Build and run informer"
 	@echo "  run-list-deployments   - Build and run list deployments command"
 	@echo "  test-k8s               - Test Kubernetes connectivity"
+	@echo "  install                - Install binary"
 	@echo "  install-tools          - Install development tools"
 	@echo "  security               - Run security scan"
 	@echo "  help                   - Show this help message" 
