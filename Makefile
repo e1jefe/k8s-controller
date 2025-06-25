@@ -29,6 +29,7 @@ LDFLAGS := -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main
 # Test variables
 ENVTEST_K8S_VERSION = 1.29.0
 ENVTEST_BIN_DIR = bin/k8s
+ENVTEST_PLATFORM = $(shell go env GOOS)-$(shell go env GOARCH)
 
 .PHONY: all build clean test test-coverage deps fmt lint vet check docker-build docker-push help envtest
 
@@ -66,12 +67,12 @@ envtest:
 # Run tests with envtest
 test: envtest
 	@echo "Running tests with envtest..."
-	cd cmd && KUBEBUILDER_ASSETS="../$(ENVTEST_BIN_DIR)/k8s/1.29.0-darwin-arm64" $(GOTEST) -v -timeout 60s
+	cd cmd && KUBEBUILDER_ASSETS="../$(ENVTEST_BIN_DIR)/k8s/$(ENVTEST_K8S_VERSION)-$(ENVTEST_PLATFORM)" $(GOTEST) -v -timeout 60s
 
 # Run tests with coverage
 test-coverage: envtest
 	@echo "Running tests with coverage..."
-	cd cmd && KUBEBUILDER_ASSETS="../$(ENVTEST_BIN_DIR)/k8s/1.29.0-darwin-arm64" $(GOTEST) -v -race -coverprofile=coverage.out -timeout 60s
+	cd cmd && KUBEBUILDER_ASSETS="../$(ENVTEST_BIN_DIR)/k8s/$(ENVTEST_K8S_VERSION)-$(ENVTEST_PLATFORM)" $(GOTEST) -v -race -coverprofile=coverage.out -timeout 60s
 	cd cmd && $(GOCMD) tool cover -html=coverage.out -o coverage.html
 
 # Download dependencies
