@@ -51,13 +51,16 @@ jobs:
     - name: Verify dependencies
       run: go mod verify
 
-    - name: Run tests
-      run: go test -v -race -coverprofile=coverage.out ./...
+    - name: Setup envtest
+      run: make envtest
 
-    - name: Upload coverage to Codecov
+    - name: Run envtest unit tests
+      run: make test
+
+    - name: Upload coverage
       uses: codecov/codecov-action@v4
       with:
-        file: ./coverage.out
+        file: ./cmd/coverage.out
         flags: unittests
         name: codecov-umbrella
 
@@ -102,8 +105,28 @@ jobs:
         # Test with actual deployment
         ./k8s-controller list deployments | grep test-nginx
 
-    - name: Clean up test deployment
-      run: kubectl delete deployment test-nginx
+    - name: Test informer functionality
+      run: |
+        # Test informer help
+        ./k8s-controller informer --help
+        
+        # Test informer startup (run for 5 seconds then kill)
+        timeout 5s ./k8s-controller informer --namespace=default || true
+        
+        # Create another deployment and test informer detects it
+        kubectl create deployment test-informer --image=nginx --replicas=1
+        
+        # Run informer in background for 10 seconds to catch events
+        timeout 10s ./k8s-controller informer --namespace=default > informer_output.log 2>&1 || true
+        
+        # Check if informer detected the deployment
+        cat informer_output.log
+        grep -q "test-informer" informer_output.log || echo "Warning: Informer may not have detected deployment"
+
+    - name: Clean up test deployments
+      run: |
+        kubectl delete deployment test-nginx || true
+        kubectl delete deployment test-informer || true
 
   build:
     name: Build

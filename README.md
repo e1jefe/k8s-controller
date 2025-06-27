@@ -6,91 +6,60 @@
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/dl/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A Kubernetes resource management tool built with [Cobra CLI](https://github.com/spf13/cobra) and [client-go](https://github.com/kubernetes/client-go), providing comprehensive Kubernetes resource management capabilities.
+A lightweight Kubernetes management tool built with [Cobra CLI](https://github.com/spf13/cobra) and [client-go](https://github.com/kubernetes/client-go), providing deployment listing and real-time informer capabilities.
 
 ## Features
 
-- **Kubernetes deployment listing** with kubeconfig authentication
-- **Multiple authentication methods** (kubeconfig file, custom path, in-cluster)
-- **Clean CLI interface** with intuitive commands
-- **Docker support** with distroless images for security
-- **Comprehensive build system** with Makefile
-- **Kubernetes client-go integration** for cluster operations
-- **CI/CD pipeline** with automated testing
+- **📋 Deployment Listing**: List all deployments in specified namespaces
+- **👁️ Real-time Informer**: Watch deployment changes with live event logging
+- **🔐 Flexible Authentication**: Kubeconfig and in-cluster authentication support
+- **🚀 Simple CLI**: Clean, intuitive command interface
+- **🧪 Comprehensive Testing**: EnvTest integration with real Kubernetes API
+- **🐳 Container Ready**: Docker support with distroless images
+- **⚙️ CI/CD Ready**: Automated testing and building
 
-## Installation
+## Quick Start
 
-### Local Development
+### Installation
 
 ```bash
-# Clone the repository
+# Clone and build
 git clone <repository-url>
 cd go-k8s-controller
-
-# Download dependencies
-make deps
-
-# Build the application
 make build-local
-```
 
-### Using Make
-
-```bash
-# Build for production (Linux)
-make build
-
-# Build and show help
-make run
-
-# Build and run list deployments
-make run-list-deployments
-
-# Run all checks (format, test)
-make check
-
-# Show all available targets
-make help
-```
-
-### Using Docker
-
-```bash
-# Build Docker image
+# Or use Docker
 make docker-build
-
-# Push to registry
-make docker-push
 ```
 
-## Usage
-
-### Basic Commands
+### Basic Usage
 
 ```bash
-# Show help
-./bin/k8s-controller --help
-
-# Show list command help
-./bin/k8s-controller list --help
-```
-
-### Kubernetes Operations
-
-#### Listing Deployments
-
-```bash
-# List deployments in default namespace (uses default kubeconfig)
+# List deployments
 ./bin/k8s-controller list deployments
 
-# List deployments with custom kubeconfig
-./bin/k8s-controller list deployments --kubeconfig /path/to/kubeconfig
+# Watch deployment changes in real-time
+./bin/k8s-controller informer
 
-# List deployments with kubeconfig from custom location
-./bin/k8s-controller list deployments --kubeconfig ~/.kube/custom-config
+# Watch specific namespace
+./bin/k8s-controller informer --namespace=kube-system
 ```
 
-**Output Example:**
+## Commands
+
+### 📋 List Deployments
+
+Display all deployments in a namespace with status information.
+
+```bash
+# Default namespace
+./bin/k8s-controller list deployments
+
+# Custom kubeconfig
+./bin/k8s-controller list deployments --kubeconfig /path/to/config
+```
+
+**Example Output:**
 ```
 Found 2 deployments in default namespace:
 
@@ -100,217 +69,160 @@ nginx                          2/2        2          2          5m
 web-app                        3/3        3          3          2h             
 ```
 
-#### Authentication
+### 👁️ Deployment Informer
 
-The application supports multiple authentication methods:
+Watch for real-time deployment changes and log events as they happen.
 
-1. **Kubeconfig file** (default: `~/.kube/config`)
-2. **Custom kubeconfig path** via `--kubeconfig` flag
-3. **In-cluster configuration** when running inside a Kubernetes pod
+```bash
+# Watch default namespace
+./bin/k8s-controller informer
 
-### Command Flags
+# Watch specific namespace  
+./bin/k8s-controller informer --namespace=production
 
-#### Global Flags
-- `--help, -h`: Show help information
+# Custom kubeconfig
+./bin/k8s-controller informer --kubeconfig ~/.kube/config
+```
 
-#### List Flags
-- `--kubeconfig`: Path to kubeconfig file (default: `$HOME/.kube/config`)
+**Example Output:**
+```
+Starting informer for deployments in namespace: default
+Informer running! Press Ctrl+C to stop...
+Deployment ADDED: default/nginx-deployment
+Deployment UPDATED: default/nginx-deployment  
+Deployment DELETED: default/old-deployment
+```
+
+### 🔐 Authentication
+
+Both commands support flexible authentication:
+
+- **Kubeconfig**: Uses `~/.kube/config` by default
+- **Custom Path**: `--kubeconfig /path/to/config`
+- **In-cluster**: Automatic when running in Kubernetes pods
 
 ## Development
 
 ### Prerequisites
 
-- Go 1.21 or later
-- Docker (for containerized builds)
+- Go 1.21+
 - Make
-- Kubernetes cluster access (for testing list functionality)
+- Docker (optional)
 
-### Available Make Targets
+### Building & Testing
 
 ```bash
-make all                    # Run clean, deps, fmt, test, and build
-make build                  # Build binary for Linux (production)
-make build-local            # Build binary for current OS
-make clean                  # Clean build artifacts
-make test                   # Run tests
-make test-coverage          # Run tests with coverage report
-make deps                   # Download and tidy dependencies
-make fmt                    # Format code
-make check                  # Run all checks (fmt, test)
-make docker-build           # Build Docker image
-make docker-push            # Push Docker image
-make run                    # Build and show help
-make run-list-deployments   # Build and run list deployments command
-make test-k8s               # Test Kubernetes connectivity
-make security               # Run security scan (requires gosec)
+# Development workflow
+make deps          # Download dependencies
+make fmt           # Format code
+make test          # Run tests with envtest
+make build-local   # Build for current OS
+
+# Production build
+make build         # Build for Linux
+
+# Docker
+make docker-build  # Build container image
 ```
 
 ### Testing
 
+The project uses [EnvTest](https://book.kubebuilder.io/reference/envtest.html) for integration testing with real Kubernetes APIs:
+
 ```bash
-# Run unit tests
+# Setup test environment
+make envtest
+
+# Run tests
 make test
 
-# Run tests with coverage
+# Run with coverage
 make test-coverage
-
-# Test Kubernetes connectivity (requires cluster access)
-make test-k8s
 ```
 
-### Kubernetes Integration Testing
+### Available Make Targets
 
-The project includes integration tests that run against a real Kubernetes cluster:
+| Target | Description |
+|--------|-------------|
+| `make build` | Build Linux binary (production) |
+| `make build-local` | Build for current OS |
+| `make test` | Run envtest integration tests |
+| `make envtest` | Setup Kubernetes test binaries |
+| `make clean` | Clean build artifacts |
+| `make fmt` | Format code |
+| `make vet` | Run go vet |
+| `make docker-build` | Build Docker image |
+| `make help` | Show all targets |
+
+## CI/CD
+
+The project includes a comprehensive GitHub Actions pipeline:
+
+### 🧪 **Test Pipeline**
+- **Unit Tests**: EnvTest with real Kubernetes API
+- **Integration Tests**: Full deployment lifecycle testing with Kind
+- **Platform Support**: Automatic detection (Linux/macOS, ARM64/AMD64)
+
+### 🔄 **Build Pipeline**  
+- **Multi-platform**: Linux and macOS binaries
+- **Docker Images**: Distroless containers for security
+- **Automated Releases**: Tagged versions with artifacts
+
+### ✅ **Quality Checks**
+- **Code Coverage**: Comprehensive test coverage reporting
+- **Security Scanning**: Automated vulnerability detection
+- **Code Formatting**: Enforced Go formatting standards
+
+## Docker Usage
+
+### Pre-built Images
 
 ```bash
-# Start local cluster (minikube/kind) and run
-make test-k8s
+# Pull and run
+docker pull ghcr.io/e1jefe/k8s-controller:latest
 
-# Or manually test with actual deployments
-kubectl create deployment nginx --image=nginx --replicas=2
-./bin/k8s-controller list deployments
-kubectl delete deployment nginx
+# List deployments
+docker run --rm -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller list deployments
+
+# Run informer
+docker run --rm -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller informer
 ```
 
-## Docker Deployment
-
-The project includes a multi-stage Dockerfile using distroless images for security:
-
-### Basic Usage
+### Building Locally
 
 ```bash
 # Build image
-docker build -t k8s-controller:latest .
+make docker-build
 
-# Show help
-docker run k8s-controller:latest
+# Run locally built image
+docker run --rm -v ~/.kube:/root/.kube k8s-controller:latest --help
 ```
 
-### Kubernetes Operations with Docker
+## Requirements
 
-```bash
-# Run with mounted kubeconfig (external cluster)
-docker run -v ~/.kube/config:/tmp/kubeconfig:ro \
-  k8s-controller:latest list deployments --kubeconfig /tmp/kubeconfig
+- **Kubernetes**: v1.20+ cluster access
+- **Authentication**: Valid kubeconfig or in-cluster permissions
+- **Permissions**: Read access to deployments in target namespaces
 
-# Run in Kubernetes cluster (in-cluster auth)
-kubectl run k8s-controller \
-  --image=k8s-controller:latest \
-  --restart=Never \
-  -- list deployments
+## Architecture
+
 ```
-
-### Docker Image Features
-
-The Docker image:
-- Uses Go 1.21 Alpine for building
-- Creates a statically linked binary
-- Uses distroless/static:nonroot for the final image
-- Runs as non-root user
-- Supports volume mounting for kubeconfig
-- Multi-architecture support (linux/amd64, linux/arm64)
-
-## Deployment Examples
-
-### Local Development
-
-```bash
-# Install and test locally
-make build-local
-./bin/k8s-controller list deployments
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   CLI Commands  │    │  Client-Go API  │    │  Kubernetes API │
+│                 │───▶│                 │───▶│                 │
+│ • list          │    │ • REST Client   │    │ • Deployments   │
+│ • informer      │    │ • Informers     │    │ • Events        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
-
-### Kubernetes Job
-
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: k8s-controller-list
-spec:
-  template:
-    spec:
-      containers:
-      - name: k8s-controller
-        image: k8s-controller:latest
-        command: ["k8s-controller", "list", "deployments"]
-      restartPolicy: Never
-  backoffLimit: 4
-```
-
-### Kubernetes CronJob (Regular Deployment Checks)
-
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: deployment-monitor
-spec:
-  schedule: "*/5 * * * *"  # Every 5 minutes
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: k8s-controller
-            image: k8s-controller:latest
-            command: ["k8s-controller", "list", "deployments"]
-          restartPolicy: OnFailure
-```
-
-## CI/CD Pipeline
-
-The project includes a comprehensive GitHub Actions workflow that:
-
-- **Tests** the application with unit tests and coverage reporting
-- **Kubernetes Integration Tests** using minikube to verify deployment listing functionality
-- **Builds** multi-architecture Docker images
-- **Pushes** to GitHub Container Registry
-- **Validates** the entire pipeline on every push and pull request
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Kubeconfig not found**
-   ```bash
-   # Verify kubeconfig location
-   ls -la ~/.kube/config
-   
-   # Test cluster connectivity
-   kubectl cluster-info
-   
-   # Use custom kubeconfig
-   ./k8s-controller list deployments --kubeconfig /path/to/config
-   ```
-
-2. **Permission denied errors**
-   ```bash
-   # Check cluster permissions
-   kubectl auth can-i list deployments
-   
-   # Verify current context
-   kubectl config current-context
-   ```
-
-3. **Docker volume mounting issues**
-   ```bash
-   # Ensure proper permissions on kubeconfig
-   chmod 644 ~/.kube/config
-   
-   # Use absolute paths in volume mounts
-   docker run -v /absolute/path/to/kubeconfig:/tmp/kubeconfig:ro ...
-   ```
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Run `make check` to ensure code quality
-6. Submit a pull request
+3. Make changes with tests
+4. Run `make check` to verify
+5. Submit a pull request
 
 ## License
 
-This project is a Kubernetes resource management tool with comprehensive deployment listing capabilities. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
