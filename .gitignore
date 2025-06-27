@@ -27,6 +27,14 @@ go.work.sum
 # env file
 .env
 
+# Build artifacts and binaries
+bin/
+build/
+
+# Envtest binaries (downloaded dependencies)
+bin/k8s/
+testbin/
+
 # Editor/IDE
 # .idea/
 # .vscode/

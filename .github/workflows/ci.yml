@@ -54,8 +54,8 @@ jobs:
     - name: Setup envtest
       run: make envtest
 
-    - name: Run envtest unit tests
-      run: make test
+    - name: Run envtest unit tests with coverage
+      run: make test-coverage
 
     - name: Upload coverage
       uses: codecov/codecov-action@v4
@@ -63,6 +63,8 @@ jobs:
         file: ./cmd/coverage.out
         flags: unittests
         name: codecov-umbrella
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
 
   kubernetes-integration:
     name: Kubernetes Integration Test

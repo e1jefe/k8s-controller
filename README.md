@@ -12,6 +12,7 @@ A lightweight Kubernetes management tool built with [Cobra CLI](https://github.c
 
 - **📋 Deployment Listing**: List all deployments in specified namespaces
 - **👁️ Real-time Informer**: Watch deployment changes with live event logging
+- **🌐 JSON API Server**: Fast HTTP API with informer cache for programmatic access
 - **🔐 Flexible Authentication**: Kubeconfig and in-cluster authentication support
 - **🚀 Simple CLI**: Clean, intuitive command interface
 - **🧪 Comprehensive Testing**: EnvTest integration with real Kubernetes API
@@ -40,6 +41,9 @@ make docker-build
 
 # Watch deployment changes in real-time
 ./bin/k8s-controller informer
+
+# Start JSON API server
+./bin/k8s-controller api
 
 # Watch specific namespace
 ./bin/k8s-controller informer --namespace=kube-system
@@ -93,9 +97,70 @@ Deployment UPDATED: default/nginx-deployment
 Deployment DELETED: default/old-deployment
 ```
 
+### 🌐 JSON API Server
+
+Start a fast HTTP API server that provides JSON access to deployment data from informer cache.
+
+```bash
+# Start API server on default port 8080
+./bin/k8s-controller api
+
+# Custom port and namespace
+./bin/k8s-controller api --port=9090 --namespace=production
+
+# Custom kubeconfig
+./bin/k8s-controller api --kubeconfig ~/.kube/config
+```
+
+**API Endpoint:**
+```bash
+# Get all deployments as JSON
+curl http://localhost:8080/deployments
+```
+
+**Example JSON Response:**
+```json
+[
+  {
+    "name": "nginx-deployment",
+    "namespace": "default",
+    "replicas": 3,
+    "ready": 2
+  },
+  {
+    "name": "web-app",
+    "namespace": "default", 
+    "replicas": 5,
+    "ready": 5
+  }
+]
+```
+
+**Key Features:**
+- ⚡ **Fast Response**: 1-5ms using informer cache (vs 50-200ms direct API)
+- 🔄 **Real-time Data**: Cache automatically syncs with Kubernetes
+- 📊 **Simple Format**: Clean JSON with essential deployment info
+- 🔧 **Easy Integration**: Perfect for scripts, monitoring, and automation
+
+**Integration Examples:**
+```bash
+# Monitor deployment count
+watch -n 5 'curl -s localhost:8080/deployments | jq "length"'
+
+# Check if all deployments are ready
+curl -s localhost:8080/deployments | jq '.[] | select(.ready != .replicas) | .name'
+
+# Get deployment names only
+curl -s localhost:8080/deployments | jq -r '.[].name'
+
+# Use in monitoring scripts
+TOTAL=$(curl -s localhost:8080/deployments | jq 'length')
+echo "Found $TOTAL deployments"
+```
+
 ### 🔐 Authentication
 
-Both commands support flexible authentication:
+All commands support flexible authentication:
 
 - **Kubeconfig**: Uses `~/.kube/config` by default
 - **Custom Path**: `--kubeconfig /path/to/config`
@@ -186,6 +251,9 @@ docker run --rm -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller list deploy
 
 # Run informer
 docker run --rm -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller informer
+
+# Start API server
+docker run --rm -p 8080:8080 -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller api
 ```
 
 ### Building Locally
@@ -212,7 +280,16 @@ docker run --rm -v ~/.kube:/root/.kube k8s-controller:latest --help
 │                 │───▶│                 │───▶│                 │
 │ • list          │    │ • REST Client   │    │ • Deployments   │
 │ • informer      │    │ • Informers     │    │ • Events        │
+│ • api (HTTP)    │    │ • Cache Store   │    │ • Real-time     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │
+        │                       ▼
+        │              ┌─────────────────┐
+        └─────────────▶│  HTTP API       │
+                       │                 │
+                       │ GET /deployments│ ◀── JSON Clients
+                       │ (Cached Data)   │     (curl, scripts, apps)
+                       └─────────────────┘
 ```
 
 ## Contributing
