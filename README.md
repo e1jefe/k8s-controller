@@ -6,12 +6,13 @@
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/dl/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A lightweight Kubernetes management tool built with [Cobra CLI](https://github.com/spf13/cobra) and [client-go](https://github.com/kubernetes/client-go), providing deployment listing and real-time informer capabilities.
+A lightweight Kubernetes management tool built with [Cobra CLI](https://github.com/spf13/cobra), [client-go](https://github.com/kubernetes/client-go), and [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime), providing deployment management and real-time event monitoring capabilities.
 
 ## Features
 
 - **📋 Deployment Listing**: List all deployments in specified namespaces
 - **👁️ Real-time Informer**: Watch deployment changes with live event logging
+- **🎯 Controller-Runtime**: Advanced controller with detailed event logging
 - **🌐 JSON API Server**: Fast HTTP API with informer cache for programmatic access
 - **🔐 Flexible Authentication**: Kubeconfig and in-cluster authentication support
 - **🚀 Simple CLI**: Clean, intuitive command interface
@@ -39,8 +40,11 @@ make docker-build
 # List deployments
 ./bin/k8s-controller list deployments
 
-# Watch deployment changes in real-time
+# Watch deployment changes with basic informer
 ./bin/k8s-controller informer
+
+# Run controller-runtime based controller with detailed logging
+./bin/k8s-controller controller
 
 # Start JSON API server
 ./bin/k8s-controller api
@@ -75,7 +79,7 @@ web-app                        3/3        3          3          2h
 
 ### 👁️ Deployment Informer
 
-Watch for real-time deployment changes and log events as they happen.
+Watch for real-time deployment changes and log events as they happen using basic informers.
 
 ```bash
 # Watch default namespace
@@ -96,6 +100,43 @@ Deployment ADDED: default/nginx-deployment
 Deployment UPDATED: default/nginx-deployment  
 Deployment DELETED: default/old-deployment
 ```
+
+### 🎯 Controller-Runtime Controller (NEW!)
+
+Run an advanced controller using `sigs.k8s.io/controller-runtime` with detailed event logging and reconciliation.
+
+```bash
+# Run controller watching all namespaces
+./bin/k8s-controller controller
+
+# Custom kubeconfig
+./bin/k8s-controller controller --kubeconfig ~/.kube/config
+```
+
+**Example Output:**
+```
+Starting controller - watching Deployment events...
+Deployment event        name=coredns namespace=kube-system replicas=1 ready=1 
+                       image=rancher/mirrored-coredns-coredns:1.10.1 
+                       time=2025-06-27T15:53:41+02:00
+
+Deployment event        name=nginx-app namespace=default replicas=3 ready=2
+                       image=nginx:1.21 time=2025-06-27T15:54:15+02:00
+
+Deployment deleted      name=old-app namespace=default time=2025-06-27T15:55:02+02:00
+```
+
+**Key Features:**
+- ⚡ **Controller-Runtime**: Uses the standard Kubernetes controller pattern
+- 🔄 **Real-time Events**: Logs every CREATE, UPDATE, DELETE event
+- 📊 **Structured Logging**: Clean key-value format for easy parsing
+- 🎯 **Reconciliation**: Proper Kubernetes controller reconciliation loop
+- 🔧 **Event Details**: Logs name, namespace, replicas, ready count, image, and timestamp
+
+**What Events Are Logged:**
+- **CREATE**: When new Deployments are created
+- **UPDATE**: When Deployments are modified (spec changes, status updates)
+- **DELETE**: When Deployments are removed
 
 ### 🌐 JSON API Server
 
@@ -165,6 +206,31 @@ All commands support flexible authentication:
 - **Kubeconfig**: Uses `~/.kube/config` by default
 - **Custom Path**: `--kubeconfig /path/to/config`
 - **In-cluster**: Automatic when running in Kubernetes pods
+
+## Controller Architecture
+
+The project provides multiple ways to watch Kubernetes Deployments:
+
+### Basic Informer (`informer` command)
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   CLI Informer  │    │  Client-Go      │    │  Kubernetes API │
+│                 │───▶│  SharedInformer │───▶│                 │
+│ • Simple logs   │    │  • Event Handler│    │ • Deployments   │
+│ • Basic events  │    │  • Local Cache  │    │ • Real-time     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Controller-Runtime (`controller` command)
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Controller-RT   │    │  Manager &      │    │  Kubernetes API │
+│                 │───▶│  Reconciler     │───▶│                 │
+│ • Reconcile     │    │  • Work Queue   │    │ • Deployments   │
+│ • Detailed logs │    │  • Error Retry  │    │ • Events        │
+│ • Event handling│    │  • Rate Limit   │    │ • Real-time     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ## Development
 
@@ -252,6 +318,9 @@ docker run --rm -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller list deploy
 # Run informer
 docker run --rm -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller informer
 
+# Run controller-runtime controller
+docker run --rm -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller controller
+
 # Start API server
 docker run --rm -p 8080:8080 -v ~/.kube:/root/.kube ghcr.io/e1jefe/k8s-controller api
 ```
@@ -280,7 +349,8 @@ docker run --rm -v ~/.kube:/root/.kube k8s-controller:latest --help
 │                 │───▶│                 │───▶│                 │
 │ • list          │    │ • REST Client   │    │ • Deployments   │
 │ • informer      │    │ • Informers     │    │ • Events        │
-│ • api (HTTP)    │    │ • Cache Store   │    │ • Real-time     │
+│ • controller    │    │ • Controller-RT │    │ • Real-time     │
+│ • api (HTTP)    │    │ • Cache Store   │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
         │                       │
         │                       ▼
