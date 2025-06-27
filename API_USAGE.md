@@ -279,6 +279,134 @@ func main() {
 }
 ```
 
+# Controller Manager
+
+## Manager Command
+
+The `manager` command provides a comprehensive controller manager that controls both informer and controller functionality with advanced features:
+
+### Features
+
+- **Leader Election**: Uses Kubernetes lease resources for leader election
+- **Metrics Server**: Built-in metrics endpoint for monitoring
+- **Unified Management**: Controls both informer and controller functionality in one process
+- **Health Checks**: Provides health and readiness endpoints
+
+### Usage
+
+```bash
+# Run with default settings (leader election enabled, metrics on port 8080)
+k8s-controller manager
+
+# Run without leader election
+k8s-controller manager --disable-leader-election
+
+# Run with custom metrics port
+k8s-controller manager --metrics-port=9090
+
+# Run with custom leader election ID and namespace
+k8s-controller manager --leader-election-id=my-controller --leader-election-namespace=kube-system
+
+# Watch specific namespace
+k8s-controller manager --namespace=production
+```
+
+### Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--kubeconfig` | `~/.kube/config` | Path to kubeconfig file |
+| `--namespace` | `default` | Namespace to watch for resources |
+| `--leader-election` | `true` | Enable leader election |
+| `--disable-leader-election` | `false` | Disable leader election (inverse of --leader-election) |
+| `--leader-election-id` | `k8s-controller-manager` | Leader election lease name |
+| `--leader-election-namespace` | `default` | Namespace for leader election lease |
+| `--metrics-port` | `8080` | Port for metrics server |
+| `--metrics-addr` | `:8080` | Address for metrics server |
+
+### Leader Election
+
+The manager uses Kubernetes lease resources for leader election. When multiple instances of the manager are running:
+
+- Only the leader will actively reconcile resources
+- If the leader fails, another instance will take over
+- The lease is renewed every 15 seconds by default
+- Use `--disable-leader-election` to run without leader election (not recommended for production)
+
+### Metrics
+
+The manager exposes Prometheus-compatible metrics at `/metrics` endpoint:
+
+```bash
+# Access metrics (default port 8080)
+curl http://localhost:8080/metrics
+
+# Custom port
+curl http://localhost:9090/metrics
+```
+
+### Health Checks
+
+The manager provides health check endpoints:
+
+- **Health**: `GET /healthz` - Basic health check
+- **Readiness**: `GET /readyz` - Readiness check
+
+```bash
+# Check health
+curl http://localhost:8080/healthz
+
+# Check readiness  
+curl http://localhost:8080/readyz
+```
+
+### Production Deployment
+
+For production deployments, it's recommended to:
+
+1. Enable leader election (default)
+2. Deploy multiple replicas for high availability
+3. Monitor the metrics endpoint
+4. Use health checks for liveness and readiness probes
+5. Configure appropriate RBAC permissions for lease resources
+
+### Example Kubernetes Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-controller-manager
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: k8s-controller-manager
+  template:
+    metadata:
+      labels:
+        app: k8s-controller-manager
+    spec:
+      containers:
+      - name: manager
+        image: k8s-controller:latest
+        command:
+        - /k8s-controller
+        - manager
+        - --leader-election-namespace=kube-system
+        ports:
+        - containerPort: 8080
+          name: metrics
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8080
+```
+
 ---
 
 **🎯 The JSON API provides fast, cached access to Kubernetes deployment data with real-time updates and a simple REST interface.** 
